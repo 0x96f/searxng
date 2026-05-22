@@ -2,6 +2,11 @@
 
 set -e
 
+if [ -z "${SEARXNG_SECRET:-}" ]; then
+  echo "Error: SEARXNG_SECRET is not set" >&2
+  exit 1
+fi
+
 docker compose up -d
 
 echo ""

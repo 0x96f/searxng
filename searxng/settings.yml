@@ -4,7 +4,6 @@ general:
   instance_name: "SearXNG"
 
 server:
-  secret_key: "REPLACE_ME_WITH_A_SECRET_KEY"
   limiter: false
   image_proxy: false
 

@@ -9,15 +9,17 @@ A minimal local SearXNG instance running via Docker.
 
 ## Usage
 
-Start the instance:
+Start the instance (requires `SEARXNG_SECRET`):
 
 ```bash
+export SEARXNG_SECRET="$(openssl rand -hex 32)"
 ./start.sh
 ```
 
 Or manually:
 
 ```bash
+export SEARXNG_SECRET="$(openssl rand -hex 32)"
 docker compose up -d
 ```
 
@@ -33,10 +35,6 @@ SearXNG will be available at http://localhost:9009
 ## Configuration
 
 Settings are in `searxng/settings.yml`. The instance uses SearXNG defaults and overrides only the following:
-
-**IMPORTANT:**
-
-- Before running the instance, edit the `secret_key` value in `searxng/settings.yml` to a unique, random string.
 
 **Search settings:**
 
