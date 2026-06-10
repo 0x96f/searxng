@@ -13,4 +13,4 @@ services:
       - UWSGI_WORKERS=4
       - UWSGI_THREADS=4
     volumes:
-      - ./searxng:/etc/searxng
+      - ./config:/etc/searxng

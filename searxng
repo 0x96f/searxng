@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.yml"
+CONTAINER_NAME="searxng"
+IMAGE="docker.io/searxng/searxng:latest"
+CONFIG_DIR="${SCRIPT_DIR}/config"
+HOST_PORT=9009
+CONTAINER_PORT=8080
+
+require_secret() {
+  if [ -z "${SEARXNG_SECRET:-}" ]; then
+    cat >&2 <<'EOF'
+Error: SEARXNG_SECRET is not set
+  export SEARXNG_SECRET="$(openssl rand -hex 32)"
+EOF
+    exit 1
+  fi
+}
+
+print_endpoints() {
+  local status="$1"
+
+  cat <<EOF
+
+SearXNG is ${status}
+  Web UI        http://localhost:${HOST_PORT}
+  Suggestions   http://localhost:${HOST_PORT}/autocompleter?q=<string>
+  JSON API      http://localhost:${HOST_PORT}/search?q=test&format=json
+EOF
+}
+
+check_docker() {
+  if ! command -v docker >/dev/null 2>&1 || ! docker compose version >/dev/null 2>&1; then
+    cat >&2 <<'EOF'
+Error: Docker Compose not found
+  Install Docker Desktop or Docker Engine with Compose
+EOF
+    exit 1
+  fi
+}
+
+docker_start() {
+  check_docker
+  require_secret
+  docker compose -f "${COMPOSE_FILE}" up -d
+  print_endpoints "starting"
+}
+
+docker_stop() {
+  check_docker
+  docker compose -f "${COMPOSE_FILE}" down
+  echo ""
+  echo "SearXNG stopped"
+}
+
+check_ac() {
+  if ! command -v container >/dev/null 2>&1; then
+    cat >&2 <<'EOF'
+Error: Apple Container CLI not found
+  Install from https://github.com/apple/container/releases
+EOF
+    exit 1
+  fi
+}
+
+ensure_ac_system() {
+  local status
+
+  if ! status="$(container system status 2>/dev/null | awk '/^status/ {print $2}')"; then
+    container system start
+    return
+  fi
+
+  if [ "${status}" != "running" ]; then
+    container system start
+  fi
+}
+
+ac_exists() {
+  container list -a -q 2>/dev/null | grep -qx "${CONTAINER_NAME}"
+}
+
+ac_running() {
+  container list -q 2>/dev/null | grep -qx "${CONTAINER_NAME}"
+}
+
+ac_start() {
+  check_ac
+  ensure_ac_system
+  require_secret
+
+  if ac_running; then
+    print_endpoints "already running"
+    return 0
+  fi
+
+  container image pull "${IMAGE}"
+
+  if ac_exists; then
+    container delete -f "${CONTAINER_NAME}"
+  fi
+
+  container run -d \
+    --name "${CONTAINER_NAME}" \
+    -p "${HOST_PORT}:${CONTAINER_PORT}" \
+    -e "SEARXNG_BASE_URL=http://localhost:${HOST_PORT}/" \
+    -e "SEARXNG_SECRET=${SEARXNG_SECRET}" \
+    -e "UWSGI_WORKERS=4" \
+    -e "UWSGI_THREADS=4" \
+    -v "${CONFIG_DIR}:/etc/searxng" \
+    "${IMAGE}"
+
+  print_endpoints "starting"
+}
+
+ac_stop() {
+  check_ac
+  ensure_ac_system
+
+  if ! ac_exists; then
+    echo ""
+    echo "SearXNG is not running"
+    return 0
+  fi
+
+  if ac_running; then
+    container stop "${CONTAINER_NAME}"
+  fi
+
+  container delete "${CONTAINER_NAME}"
+  echo ""
+  echo "SearXNG stopped"
+}
+
+usage() {
+  cat >&2 <<'EOF'
+Usage: ./searxng <docker|ac> <command>
+
+Runtimes:
+  docker     Docker Compose
+  ac         Apple Container
+
+Commands:
+  start      Start SearXNG (requires SEARXNG_SECRET)
+  stop       Stop SearXNG
+EOF
+  exit 1
+}
+
+runtime="${1:-}"
+command="${2:-}"
+
+case "${runtime}:${command}" in
+  docker:start) docker_start ;;
+  docker:stop) docker_stop ;;
+  ac:start) ac_start ;;
+  ac:stop) ac_stop ;;
+  *) usage ;;
+esac
