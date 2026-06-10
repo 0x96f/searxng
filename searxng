@@ -56,6 +56,11 @@ docker_stop() {
   echo "SearXNG stopped"
 }
 
+docker_restart() {
+  docker_stop
+  docker_start
+}
+
 check_ac() {
   if ! command -v container >/dev/null 2>&1; then
     cat >&2 <<'EOF'
@@ -87,6 +92,10 @@ ac_running() {
   container list -q 2>/dev/null | grep -qx "${CONTAINER_NAME}"
 }
 
+ac_image_exists() {
+  container image inspect "${IMAGE}" >/dev/null 2>&1
+}
+
 ac_start() {
   check_ac
   ensure_ac_system
@@ -97,7 +106,9 @@ ac_start() {
     return 0
   fi
 
-  container image pull "${IMAGE}"
+  if ! ac_image_exists; then
+    container image pull "${IMAGE}"
+  fi
 
   if ac_exists; then
     container delete -f "${CONTAINER_NAME}"
@@ -135,6 +146,11 @@ ac_stop() {
   echo "SearXNG stopped"
 }
 
+ac_restart() {
+  ac_stop
+  ac_start
+}
+
 usage() {
   cat >&2 <<'EOF'
 Usage: ./searxng <docker|ac> <command>
@@ -146,6 +162,7 @@ Runtimes:
 Commands:
   start      Start SearXNG (requires SEARXNG_SECRET)
   stop       Stop SearXNG
+  restart    Stop and recreate SearXNG (requires SEARXNG_SECRET)
 EOF
   exit 1
 }
@@ -156,7 +173,9 @@ command="${2:-}"
 case "${runtime}:${command}" in
   docker:start) docker_start ;;
   docker:stop) docker_stop ;;
+  docker:restart) docker_restart ;;
   ac:start) ac_start ;;
   ac:stop) ac_stop ;;
+  ac:restart) ac_restart ;;
   *) usage ;;
 esac

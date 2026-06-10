@@ -22,20 +22,18 @@ Before starting you will need to set `SEARXNG_SECRET`. The simplest way is the f
 export SEARXNG_SECRET="$(openssl rand -hex 32)"
 ```
 
-You can start/stop SearXNG with the following commands (requires `SEARXNG_SECRET` for starting):
+You can start, stop, or restart SearXNG with the following commands (`SEARXNG_SECRET` is required for start and restart):
 
 ```bash
 # Running with Docker
-# Start the container
 ./searxng docker start
-# Stop the container
-./searxng docker start
+./searxng docker stop
+./searxng docker restart
 
 # Running with Apple Container
-# Start the container
 ./searxng ac start
-# Stop the container
-./searxng ac start
+./searxng ac stop
+./searxng ac restart
 ```
 
 SearXNG will be available on [localhost:9009](http://localhost:9009)
