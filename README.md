@@ -42,6 +42,16 @@ Use `--clean` on start to remove existing containers, images, and runtime data i
 
 SearXNG will be available on [localhost:9009](http://localhost:9009)
 
+### Apple Container networking
+
+Apple Container often sets the container DNS to `192.168.64.1`, which does not resolve hostnames. That shows up in SearXNG as `HTTP connection error` on every engine. The `./searxng ac start` command passes working DNS servers automatically. If you already have a container running, restart it so the new DNS settings take effect:
+
+```bash
+./searxng ac restart
+```
+
+To use different DNS servers, edit the `ac_dns_args()` function in `searxng`. It auto-detects your Mac’s primary DNS via `scutil` and adds `1.1.1.1` and `8.8.8.8` as fallbacks - change or remove those `--dns` values as needed, then restart.
+
 ## Resource usage
 
 To check resource usage you can run the following commands:

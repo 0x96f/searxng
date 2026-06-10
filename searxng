@@ -110,6 +110,17 @@ ac_image_exists() {
   container image inspect "${IMAGE}" >/dev/null 2>&1
 }
 
+ac_dns_args() {
+  local dns
+
+  # Apple Container defaults to 192.168.64.1, which often does not resolve names.
+  dns="$(scutil --dns 2>/dev/null | awk '/^  nameserver\[0\] :/ {print $3; exit}')"
+  if [ -n "${dns}" ]; then
+    printf '%s\n' --dns "${dns}"
+  fi
+  printf '%s\n' --dns 1.1.1.1 --dns 8.8.8.8
+}
+
 clean_config_data() {
   local item
 
@@ -166,6 +177,7 @@ ac_start() {
   container run -d \
     --name "${CONTAINER_NAME}" \
     -p "${HOST_PORT}:${CONTAINER_PORT}" \
+    $(ac_dns_args) \
     -e "SEARXNG_BASE_URL=http://localhost:${HOST_PORT}/" \
     -e "SEARXNG_SECRET=${SEARXNG_SECRET}" \
     -e "UWSGI_WORKERS=4" \
