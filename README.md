@@ -27,14 +27,18 @@ You can start, stop, or restart SearXNG with the following commands (`SEARXNG_SE
 ```bash
 # Running with Docker
 ./searxng docker start
+./searxng docker start --clean
 ./searxng docker stop
 ./searxng docker restart
 
 # Running with Apple Container
 ./searxng ac start
+./searxng ac start --clean
 ./searxng ac stop
 ./searxng ac restart
 ```
+
+Use `--clean` on start to remove existing containers, images, and runtime data in `config/`, pull a fresh image, and start from scratch. Your `config/settings.yml` is preserved.
 
 SearXNG will be available on [localhost:9009](http://localhost:9009)
 

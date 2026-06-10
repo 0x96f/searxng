@@ -43,10 +43,24 @@ EOF
 }
 
 docker_start() {
+  local clean="${1:-false}"
+
   check_docker
   require_secret
+
+  if [ "${clean}" = true ]; then
+    docker_clean
+    docker compose -f "${COMPOSE_FILE}" pull
+  fi
+
   docker compose -f "${COMPOSE_FILE}" up -d
   print_endpoints "starting"
+}
+
+docker_clean() {
+  check_docker
+  docker compose -f "${COMPOSE_FILE}" down --remove-orphans -v --rmi all || true
+  clean_config_data
 }
 
 docker_stop() {
@@ -96,22 +110,57 @@ ac_image_exists() {
   container image inspect "${IMAGE}" >/dev/null 2>&1
 }
 
+clean_config_data() {
+  local item
+
+  for item in "${CONFIG_DIR}"/*; do
+    [ -e "${item}" ] || continue
+    [ "$(basename "${item}")" = "settings.yml" ] && continue
+    rm -rf "${item}"
+  done
+}
+
+ac_clean() {
+  check_ac
+  ensure_ac_system
+
+  if ac_exists; then
+    if ac_running; then
+      container stop "${CONTAINER_NAME}"
+    fi
+    container delete -f "${CONTAINER_NAME}"
+  fi
+
+  if ac_image_exists; then
+    container image delete -f "${IMAGE}"
+  fi
+
+  clean_config_data
+}
+
 ac_start() {
+  local clean="${1:-false}"
+
   check_ac
   ensure_ac_system
   require_secret
 
-  if ac_running; then
-    print_endpoints "already running"
-    return 0
-  fi
-
-  if ! ac_image_exists; then
+  if [ "${clean}" = true ]; then
+    ac_clean
     container image pull "${IMAGE}"
-  fi
+  else
+    if ac_running; then
+      print_endpoints "already running"
+      return 0
+    fi
 
-  if ac_exists; then
-    container delete -f "${CONTAINER_NAME}"
+    if ! ac_image_exists; then
+      container image pull "${IMAGE}"
+    fi
+
+    if ac_exists; then
+      container delete -f "${CONTAINER_NAME}"
+    fi
   fi
 
   container run -d \
@@ -153,28 +202,39 @@ ac_restart() {
 
 usage() {
   cat >&2 <<'EOF'
-Usage: ./searxng <docker|ac> <command>
+Usage: ./searxng <docker|ac> <command> [options]
 
 Runtimes:
   docker     Docker Compose
   ac         Apple Container
 
 Commands:
-  start      Start SearXNG (requires SEARXNG_SECRET)
-  stop       Stop SearXNG
-  restart    Stop and recreate SearXNG (requires SEARXNG_SECRET)
+  start [--clean]   Start SearXNG (requires SEARXNG_SECRET)
+  stop              Stop SearXNG
+  restart           Stop and recreate SearXNG (requires SEARXNG_SECRET)
+
+Options:
+  --clean           Remove existing containers, images, and runtime data,
+                    pull a fresh image, then start
 EOF
   exit 1
 }
 
 runtime="${1:-}"
 command="${2:-}"
+clean=false
+
+if [ "${3:-}" = "--clean" ]; then
+  clean=true
+elif [ -n "${3:-}" ]; then
+  usage
+fi
 
 case "${runtime}:${command}" in
-  docker:start) docker_start ;;
+  docker:start) docker_start "${clean}" ;;
   docker:stop) docker_stop ;;
   docker:restart) docker_restart ;;
-  ac:start) ac_start ;;
+  ac:start) ac_start "${clean}" ;;
   ac:stop) ac_stop ;;
   ac:restart) ac_restart ;;
   *) usage ;;
