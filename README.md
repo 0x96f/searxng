@@ -1,12 +1,12 @@
-# SearXNG local setup
+# SearXNG
 
-A minimal local SearXNG instance running via Docker or [Apple Container](https://github.com/apple/container).
+A minimal SearXNG instance running via [Docker](https://www.docker.com/) or [Apple Container](https://github.com/apple/container).
 
 ## Requirements
 
 ### Docker
 
-- Docker
+- [Docker](https://www.docker.com/)
 - Docker Compose
 
 ### Apple Container
@@ -16,11 +16,14 @@ A minimal local SearXNG instance running via Docker or [Apple Container](https:/
 
 ## Usage
 
-Before starting you will need to set `SEARXNG_SECRET`. The simplest way is the following:
+Copy the example env file and set at least `SEARXNG_SECRET`:
 
 ```bash
-export SEARXNG_SECRET="$(openssl rand -hex 32)"
+cp .env.example .env
+# edit .env - set SEARXNG_SECRET (e.g. openssl rand -hex 32)
 ```
+
+The `./searxng` script loads `.env` automatically (shell-exported variables take precedence). Docker Compose also loads `.env` when you run `docker compose` directly.
 
 You can start, stop, or restart SearXNG with the following commands (`SEARXNG_SECRET` is required for start and restart):
 
@@ -41,6 +44,33 @@ You can start, stop, or restart SearXNG with the following commands (`SEARXNG_SE
 Use `--clean` on start to remove existing containers, images, and runtime data in `config/`, pull a fresh image, and start from scratch. Your `config/settings.yml` is preserved.
 
 SearXNG will be available on [localhost:9009](http://localhost:9009)
+
+### uWSGI workers and threads
+
+`UWSGI_WORKERS` and `UWSGI_THREADS` default to `4`. Set them in `.env` (or export them) before start:
+
+```bash
+# in .env
+UWSGI_WORKERS=8
+UWSGI_THREADS=2
+```
+
+### Cloudflare Tunnel (Docker only)
+
+To expose SearXNG through a Cloudflare Tunnel, create a tunnel in [Cloudflare Zero Trust](https://one.dash.cloudflare.com/) and point a public hostname at `http://searxng:8080`. Then set the token in `.env`:
+
+```bash
+CLOUDFLARE_TUNNEL_TOKEN=<your-tunnel-token>
+SEARXNG_BASE_URL=https://search.example.com/
+```
+
+When `CLOUDFLARE_TUNNEL_TOKEN` is set, `./searxng docker start` also starts `cloudflared` via [`compose.cloudflare.yml`](compose.cloudflare.yml). You can run the same stack manually:
+
+```bash
+docker compose -f compose.yml -f compose.cloudflare.yml up -d
+```
+
+Set `SEARXNG_BASE_URL` to your public hostname when using the tunnel.
 
 ### Apple Container networking
 

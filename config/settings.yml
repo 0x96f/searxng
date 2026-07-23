@@ -1,4 +1,35 @@
-use_default_settings: true
+use_default_settings:
+  engines:
+    keep_only:
+      - google
+      - duckduckgo
+      - brave
+      - startpage
+      - dictzone
+      - currency
+      - wikipedia
+      - devicons
+      - lucide
+      - material icons
+      - bing images
+      - google images
+      - duckduckgo images
+      - openverse
+      - unsplash
+      - wikicommons.images
+      - duckduckgo videos
+      - youtube
+      - startpage news
+      - duckduckgo news
+      - soundcloud
+      - apple app store
+      - google play apps
+      - apple maps
+      - openstreetmap
+      - photon
+      - reddit
+      - openmeteo
+      - duckduckgo weather
 
 general:
   instance_name: "SearXNG"
@@ -23,181 +54,91 @@ outgoing:
   default_doi_resolver: "doi.org"
 
 engines:
-  # ========== Enabled engines ==========
-  - name: codeberg
+  - name: google
     disabled: false
-
-  - name: dbpedia
-    disabled: false
+    inactive: false
 
   - name: duckduckgo
     disabled: false
 
-  - name: duckduckgo weather
+  - name: brave
     disabled: false
 
-  - name: gitea.com
+  - name: startpage
     disabled: false
 
-  - name: gitlab
+  - name: dictzone
     disabled: false
 
-  - name: google
-    disabled: false
-
-  - name: huggingface
-    disabled: false
-
-  - name: huggingface datasets
-    disabled: false
-
-  - name: material icons
-    disabled: false
-
-  - name: mojeek news
-    disabled: false
-
-  - name: npm
-    disabled: false
-
-  - name: ollama
-    disabled: false
-
-  - name: pkg.go.dev
-    disabled: false
-
-  - name: qwant
-    disabled: false
-
-  - name: rottentomatoes
-    disabled: false
-
-  - name: selfhst icons
-    disabled: false
-
-  - name: sourcehut
-    disabled: false
-
-  - name: steam
+  - name: currency
     disabled: false
 
   - name: wikipedia
     disabled: false
 
-  # ========== Disabled engines ==========
-  - name: apple app store
-    disabled: true
+  - name: devicons
+    disabled: false
 
-  - name: arch linux wiki
-    disabled: true
+  - name: lucide
+    disabled: false
 
-  - name: arxiv
-    disabled: true
+  - name: material icons
+    disabled: false
 
-  - name: bandcamp
-    disabled: true
+  - name: bing images
+    disabled: false
 
-  - name: brave
-    disabled: true
+  - name: google images
+    disabled: false
+    inactive: false
 
-  - name: bt4g
-    disabled: true
+  - name: duckduckgo images
+    disabled: false
 
-  - name: chefkoch
-    disabled: true
+  - name: openverse
+    disabled: false
 
-  - name: fdroid
-    disabled: true
+  - name: unsplash
+    disabled: false
 
-  - name: genius
-    disabled: true
+  - name: wikicommons.images
+    disabled: false
 
-  - name: gentoo
-    disabled: true
-
-  - name: google play apps
-    disabled: true
-
-  - name: google scholar
-    disabled: true
-
-  - name: hoogle
-    disabled: true
-
-  - name: karmasearch
-    disabled: true
-
-  - name: karmasearch images
-    disabled: true
-
-  - name: karmasearch news
-    disabled: true
-
-  - name: karmasearch videos
-    disabled: true
-
-  - name: kickass
-    disabled: true
-
-  - name: lemmy comments
-    disabled: true
-
-  - name: lemmy communities
-    disabled: true
-
-  - name: lemmy posts
-    disabled: true
-
-  - name: lemmy users
-    disabled: true
-
-  - name: mastodon hashtags
-    disabled: true
-
-  - name: mastodon users
-    disabled: true
-
-  - name: mixcloud
-    disabled: true
-
-  - name: openairedatasets
-    disabled: true
-
-  - name: openairepublications
-    disabled: true
-
-  - name: pdbe
-    disabled: true
-
-  - name: piratebay
-    disabled: true
-
-  - name: pubmed
-    disabled: true
-
-  - name: radio browser
-    disabled: true
-
-  - name: reddit
-    disabled: true
-
-  - name: semantic scholar
-    disabled: true
-
-  - name: solidtorrents
-    disabled: true
-
-  - name: soundcloud
-    disabled: true
-
-  - name: tootfinder
-    disabled: true
-
-  - name: wikicommons.audio
-    disabled: true
-
-  - name: wikicommons.files
-    disabled: true
+  - name: duckduckgo videos
+    disabled: false
 
   - name: youtube
-    disabled: true
+    disabled: false
+
+  - name: startpage news
+    disabled: false
+
+  - name: duckduckgo news
+    disabled: false
+
+  - name: soundcloud
+    disabled: false
+
+  - name: apple app store
+    disabled: false
+
+  - name: google play apps
+    disabled: false
+
+  - name: apple maps
+    disabled: false
+
+  - name: openstreetmap
+    disabled: false
+
+  - name: photon
+    disabled: false
+
+  - name: reddit
+    disabled: false
+
+  - name: openmeteo
+    disabled: false
+
+  - name: duckduckgo weather
+    disabled: false

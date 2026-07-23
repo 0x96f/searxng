@@ -3,17 +3,58 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.yml"
+COMPOSE_FILE="${SCRIPT_DIR}/compose.yml"
+COMPOSE_CLOUDFLARE_FILE="${SCRIPT_DIR}/compose.cloudflare.yml"
 CONTAINER_NAME="searxng"
 IMAGE="docker.io/searxng/searxng:latest"
 CONFIG_DIR="${SCRIPT_DIR}/config"
 HOST_PORT=9009
 CONTAINER_PORT=8080
 
+load_dotenv() {
+  local env_file="${SCRIPT_DIR}/.env"
+  local line key val
+
+  [ -f "${env_file}" ] || return 0
+
+  while IFS= read -r line || [ -n "${line}" ]; do
+    line="${line#"${line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    [ -z "${line}" ] && continue
+    case "${line}" in
+      \#*) continue ;;
+    esac
+    case "${line}" in
+      *=*) ;;
+      *) continue ;;
+    esac
+    key="${line%%=*}"
+    val="${line#*=}"
+    key="${key%"${key##*[![:space:]]}"}"
+    if [ -z "${!key+x}" ]; then
+      export "${key}=${val}"
+    fi
+  done < "${env_file}"
+}
+
+load_dotenv
+
+compose_args() {
+  local args=(-f "${COMPOSE_FILE}")
+
+  if [ -n "${CLOUDFLARE_TUNNEL_TOKEN:-}" ]; then
+    args+=(-f "${COMPOSE_CLOUDFLARE_FILE}")
+  fi
+
+  printf '%s\n' "${args[@]}"
+}
+
 require_secret() {
   if [ -z "${SEARXNG_SECRET:-}" ]; then
     cat >&2 <<'EOF'
 Error: SEARXNG_SECRET is not set
+  cp .env.example .env
+  # then set SEARXNG_SECRET in .env, or:
   export SEARXNG_SECRET="$(openssl rand -hex 32)"
 EOF
     exit 1
@@ -50,22 +91,22 @@ docker_start() {
 
   if [ "${clean}" = true ]; then
     docker_clean
-    docker compose -f "${COMPOSE_FILE}" pull
+    docker compose $(compose_args) pull
   fi
 
-  docker compose -f "${COMPOSE_FILE}" up -d
+  docker compose $(compose_args) up -d
   print_endpoints "starting"
 }
 
 docker_clean() {
   check_docker
-  docker compose -f "${COMPOSE_FILE}" down --remove-orphans -v --rmi all || true
+  docker compose $(compose_args) down --remove-orphans -v --rmi all || true
   clean_config_data
 }
 
 docker_stop() {
   check_docker
-  docker compose -f "${COMPOSE_FILE}" down
+  docker compose $(compose_args) down
   echo ""
   echo "SearXNG stopped"
 }
@@ -178,10 +219,10 @@ ac_start() {
     --name "${CONTAINER_NAME}" \
     -p "${HOST_PORT}:${CONTAINER_PORT}" \
     $(ac_dns_args) \
-    -e "SEARXNG_BASE_URL=http://localhost:${HOST_PORT}/" \
+    -e "SEARXNG_BASE_URL=${SEARXNG_BASE_URL:-http://localhost:${HOST_PORT}/}" \
     -e "SEARXNG_SECRET=${SEARXNG_SECRET}" \
-    -e "UWSGI_WORKERS=4" \
-    -e "UWSGI_THREADS=4" \
+    -e "UWSGI_WORKERS=${UWSGI_WORKERS:-4}" \
+    -e "UWSGI_THREADS=${UWSGI_THREADS:-4}" \
     -v "${CONFIG_DIR}:/etc/searxng" \
     "${IMAGE}"
 
